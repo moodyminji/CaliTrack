@@ -7,4 +7,6 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="material_you_consumed_color">#FF9800</color> <!-- A pleasant orange -->
+    <color name="material_you_burned_color">#4CAF50</color>   <!-- A vibrant green -->
 </resources>
