@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "754317067424",
+    "project_id": "calitrackapp",
+    "storage_bucket": "calitrackapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754317067424:android:1c810b4815c7c3c84735c5",
+        "android_client_info": {
+          "package_name": "com.moodyminji.calitrack"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "754317067424-v0j0spjhudbja5jp7f4um8d84v9lu9ve.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvUlN4XkngWb-wWfDsHXgC8A9pyQyj_X4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "754317067424-v0j0spjhudbja5jp7f4um8d84v9lu9ve.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_track"
+        android:icon="@drawable/ic_trending_up"
+        android:title="Track"
+        android:enabled="true" />
 
     <item
-        android:id="@+id/navigation_home"
-        android:icon="@drawable/ic_home_black_24dp"
-        android:title="@string/title_home" />
+        android:id="@+id/nav_history"
+        android:icon="@drawable/ic_clock_outline"
+        android:title="History"
+        android:enabled="true" />
 
     <item
-        android:id="@+id/navigation_dashboard"
-        android:icon="@drawable/ic_dashboard_black_24dp"
-        android:title="@string/title_dashboard" />
-
-    <item
-        android:id="@+id/navigation_notifications"
-        android:icon="@drawable/ic_notifications_black_24dp"
-        android:title="@string/title_notifications" />
-
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_user_outline"
+        android:title="Profile"
+        android:enabled="true" />
 </menu>

@@ -1,37 +1,78 @@
 package com.moodyminji.calitrack;
 
 import android.os.Bundle;
-
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-
+import android.view.MenuItem;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
+import androidx.fragment.app.Fragment;
 
-import com.moodyminji.calitrack.databinding.ActivityMainBinding;
+import com.example.calitrack.TrackFragment;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationBarView;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ActivityMainBinding binding;
+    private TextView headerTitle;
+    private TextView headerSubtitle;
+    private BottomNavigationView bottomNavigation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        // Initialize views
+        headerTitle = findViewById(R.id.headerTitle);
+        headerSubtitle = findViewById(R.id.headerSubtitle);
+        bottomNavigation = findViewById(R.id.bottomNavigation);
 
-        BottomNavigationView navView = findViewById(R.id.nav_view);
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications)
-                .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        NavigationUI.setupWithNavController(binding.navView, navController);
+        // Set up bottom navigation listener
+        bottomNavigation.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int itemId = item.getItemId();
+
+                if (itemId == R.id.nav_track) {
+                    loadFragment(new TrackFragment());
+                    updateHeader("Hey Salim, How's your health life doing?",
+                            "Monitor your daily health metrics");
+                    return true;
+                } else if (itemId == R.id.nav_history) {
+                    loadFragment(new HistoryFragment());
+                    updateHeader("Your Health History",
+                            "View your past activities");
+                    return true;
+                } else if (itemId == R.id.nav_profile) {
+                    loadFragment(new ProfileFragment());
+                    updateHeader("Your Profile",
+                            "Manage your account settings");
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        // Load initial fragment (Track by default)
+        if (savedInstanceState == null) {
+            bottomNavigation.setSelectedItemId(R.id.nav_track);
+        }
     }
 
+    private void loadFragment(Fragment fragment) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, fragment)
+                .commit();
+    }
+
+    private void updateHeader(String title, String subtitle) {
+        headerTitle.setText(title);
+        headerSubtitle.setText(subtitle);
+    }
+
+    // Public method for fragments to navigate to Track tab
+    public void navigateToTrack() {
+        bottomNavigation.setSelectedItemId(R.id.nav_track);
+    }
 }
