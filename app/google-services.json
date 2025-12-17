@@ -1,6 +1,6 @@
 {
   "project_info": {
-    "project_number": "754317067424",
+    "project_number": "XXXXXXXXXXXXXXXXXX",
     "project_id": "calitrackapp",
     "storage_bucket": "calitrackapp.firebasestorage.app"
   },
@@ -14,20 +14,20 @@
       },
       "oauth_client": [
         {
-          "client_id": "754317067424-v0j0spjhudbja5jp7f4um8d84v9lu9ve.apps.googleusercontent.com",
+          "client_id": XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAvUlN4XkngWb-wWfDsHXgC8A9pyQyj_X4"
+          "current_key": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "754317067424-v0j0spjhudbja5jp7f4um8d84v9lu9ve.apps.googleusercontent.com",
+              "client_id": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
               "client_type": 3
             }
           ]
