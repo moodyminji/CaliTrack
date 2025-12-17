@@ -13,6 +13,21 @@
         android:theme="@style/Theme.CaliTrack"
         tools:targetApi="31">
         <activity
+            android:name=".OnboardingCompleteActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OnboardingMetricsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OnboardingPersonalActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OnboardingGoalsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OnboardingWelcomeActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name">

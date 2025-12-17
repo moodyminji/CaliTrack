@@ -40,4 +40,8 @@
     <color name="black">#000000</color>
     <color name="teal_200">#03DAC5</color>
 
+    <color name="gray_300">#D1D5DB</color>
+    <color name="emerald_700">#047857</color>
+
+
 </resources>

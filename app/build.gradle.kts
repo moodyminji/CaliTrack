@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.firebase.ai)
     implementation(libs.firebase.database)
     implementation(libs.firebase.storage)
+    implementation(libs.activity)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
