@@ -19,6 +19,9 @@ firebaseAi = "17.7.0"
 firebaseDatabase = "22.0.1"
 firebaseStorage = "22.0.1"
 activity = "1.8.0"
+coreSplashscreen = "1.0.1"
+firebaseFirestore = "26.0.2"
+playServicesAuth = "21.4.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -39,6 +42,9 @@ firebase-ai = { group = "com.google.firebase", name = "firebase-ai", version.ref
 firebase-database = { group = "com.google.firebase", name = "firebase-database", version.ref = "firebaseDatabase" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage", version.ref = "firebaseStorage" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
