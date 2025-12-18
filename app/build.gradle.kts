@@ -52,9 +52,13 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.firebase.storage)
     implementation(libs.activity)
+    implementation(libs.core.splashscreen)
+    implementation(libs.firebase.firestore)
+    implementation(libs.play.services.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
 
 
 }

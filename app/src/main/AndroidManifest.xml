@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,30 +16,45 @@
         android:theme="@style/Theme.CaliTrack"
         tools:targetApi="31">
         <activity
-            android:name=".OnboardingCompleteActivity"
-            android:exported="false" />
+            android:name=".RegisterActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.CaliTrack"/>
+/>
         <activity
-            android:name=".OnboardingMetricsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".OnboardingPersonalActivity"
-            android:exported="false" />
-        <activity
-            android:name=".OnboardingGoalsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".OnboardingWelcomeActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MainActivity"
+            android:name=".SplashActivity"
             android:exported="true"
-            android:label="@string/app_name">
+            android:theme="@style/Theme.CaliTrack">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity> <!-- Onboarding Activities -->
+        <activity
+            android:name=".OnboardingWelcomeActivity"
+            android:theme="@style/Theme.CaliTrack"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".OnboardingPersonalActivity"
+            android:theme="@style/Theme.CaliTrack" />
+        <activity
+            android:name=".OnboardingMetricsActivity"
+            android:theme="@style/Theme.CaliTrack" />
+        <activity
+            android:name=".OnboardingGoalsActivity"
+            android:theme="@style/Theme.CaliTrack" />
+        <activity
+            android:name=".OnboardingCompleteActivity"
+            android:theme="@style/Theme.CaliTrack" /> <!-- Login Activity -->
+        <activity
+            android:name=".LoginActivity"
+            android:theme="@style/Theme.CaliTrack"
+            android:windowSoftInputMode="adjustResize"
+            /> <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/Theme.CaliTrack" />
     </application>
 
 </manifest>
