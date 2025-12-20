@@ -8,7 +8,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.fragment.app.Fragment;
 
-import com.example.calitrack.TrackFragment;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import com.moodyminji.calitrack.TrackFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 
@@ -17,13 +20,14 @@ public class MainActivity extends AppCompatActivity {
     private TextView headerTitle;
     private TextView headerSubtitle;
     private BottomNavigationView bottomNavigation;
+    private FirebaseUser currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
         // Initialize views
         headerTitle = findViewById(R.id.headerTitle);
@@ -38,8 +42,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (itemId == R.id.nav_track) {
                     loadFragment(new TrackFragment());
-                    updateHeader("Hey Salim, How's your health life doing?",
-                            "Monitor your daily health metrics");
+                    updateHeaderForTrack();;
                     return true;
                 } else if (itemId == R.id.nav_history) {
                     loadFragment(new HistoryFragment());
@@ -72,6 +75,18 @@ public class MainActivity extends AppCompatActivity {
     private void updateHeader(String title, String subtitle) {
         headerTitle.setText(title);
         headerSubtitle.setText(subtitle);
+    }
+    private void updateHeaderForTrack() {
+        String title = "Hey Weirdo, How's your health!"; // A generic default title
+        if (currentUser != null) {
+            String userName = currentUser.getDisplayName();
+            if (userName != null && !userName.isEmpty()) {
+                // If name has spaces, just take the first name
+                String firstName = userName.split(" ")[0];
+                title = "Hey " + firstName + ", How's your health?";
+            }
+        }
+        updateHeader(title, "Monitor your daily health metrics");
     }
 
     // Public method for fragments to navigate to Track tab

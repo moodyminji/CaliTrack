@@ -1,6 +1,7 @@
 package com.moodyminji.calitrack;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,9 +11,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import java.util.HashMap;
+import java.util.Map;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class ProfileFragment extends Fragment {
 
@@ -40,15 +52,9 @@ public class ProfileFragment extends Fragment {
     // Account views
     private MaterialButton logoutButton;
 
-    // Sample user data - replace with actual data from database/API
-    private String name = "Salim Ahmed";
-    private String email = "salim@example.com";
-    private int days = 24;
-    private int current = 75;
-    private int goal = 70;
-    private int age = 28;
-    private int height = 175;
-    private int calorieGoal = 1500;
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
+    private FirebaseUser currentUser;
 
     @Nullable
     @Override
@@ -62,7 +68,12 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize profile info views
+        // Initialize Firebase
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+        currentUser = mAuth.getCurrentUser();
+
+        // Initialize views
         profileInitial = view.findViewById(R.id.profileInitial);
         userName = view.findViewById(R.id.userName);
         userEmail = view.findViewById(R.id.userEmail);
@@ -70,102 +81,274 @@ public class ProfileFragment extends Fragment {
         currentWeight = view.findViewById(R.id.currentWeight);
         goalWeight = view.findViewById(R.id.goalWeight);
 
-        // Initialize health stats views
         userAge = view.findViewById(R.id.userAge);
         userHeight = view.findViewById(R.id.userHeight);
         weightGoalText = view.findViewById(R.id.weightGoalText);
         calorieGoalText = view.findViewById(R.id.calorieGoalText);
 
-        // Initialize settings views
         notificationsSwitch = view.findViewById(R.id.notificationsSwitch);
         languageOption = view.findViewById(R.id.languageOption);
         goalsOption = view.findViewById(R.id.goalsOption);
         privacyOption = view.findViewById(R.id.privacyOption);
         helpOption = view.findViewById(R.id.helpOption);
 
-        // Initialize account views
         logoutButton = view.findViewById(R.id.logoutButton);
 
-        // Load user data
-        loadUserData();
+        // Load user data from Firestore
+        loadUserProfile();
 
         // Set up click listeners
         setupClickListeners();
     }
 
-    private void loadUserData() {
-        // TODO: Load from Firebase or local database
-        // For now, use sample data
+    private void loadUserProfile() {
+        if (currentUser == null) {
+            Toast.makeText(getContext(), "Not logged in", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        // Set profile info
-        profileInitial.setText(name.substring(0, 1).toUpperCase());
-        userName.setText(name);
-        userEmail.setText(email);
-        daysActive.setText(String.valueOf(days));
-        currentWeight.setText(String.valueOf(current));
-        goalWeight.setText(String.valueOf(goal));
+        // Set basic info
+        userName.setText(currentUser.getDisplayName() != null ?
+                currentUser.getDisplayName() : "User");
+        userEmail.setText(currentUser.getEmail());
 
-        // Set health stats
-        userAge.setText(age + " years");
-        userHeight.setText(height + " cm");
+        String initial = currentUser.getDisplayName() != null &&
+                !currentUser.getDisplayName().isEmpty() ?
+                currentUser.getDisplayName().substring(0, 1).toUpperCase() : "U";
+        profileInitial.setText(initial);
 
-        int weightDiff = current - goal;
-        String goalType = weightDiff > 0 ? "Lose" : "Gain";
-        weightGoalText.setText(goalType + " " + Math.abs(weightDiff) + " kg");
+        // Load profile from Firestore
+        db.collection("users")
+                .document(currentUser.getUid())
+                .get()
+                .addOnSuccessListener(document -> {
+                    if (document.exists()) {
+                        updateUIFromFirestore(document);
+                    } else {
+                        loadFromSharedPreferences();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    loadFromSharedPreferences();
+                });
 
-        calorieGoalText.setText(calorieGoal + " kcal");
+        // Load days active
+        loadDaysActive();
+    }
+
+    private void updateUIFromFirestore(DocumentSnapshot document) {
+        try {
+            // Age
+            if (document.contains("age")) {
+                int age = document.getLong("age").intValue();
+                userAge.setText(age + " years");
+            }
+
+            // Height
+            if (document.contains("height")) {
+                float height = document.getDouble("height").floatValue();
+                userHeight.setText((int) height + " cm");
+            }
+
+            // Current Weight
+            if (document.contains("currentWeight")) {
+                float weight = document.getDouble("currentWeight").floatValue();
+                currentWeight.setText(String.format("%.1f", weight));
+            }
+
+            // Goal Weight
+            if (document.contains("goalWeight")) {
+                float gWeight = document.getDouble("goalWeight").floatValue();
+                goalWeight.setText(String.format("%.1f", gWeight));
+
+                // Calculate weight goal text
+                float current = document.getDouble("currentWeight").floatValue();
+                float diff = Math.abs(current - gWeight);
+                String goalType = current > gWeight ? "Lose" : "Gain";
+                weightGoalText.setText(String.format("%s %.1f kg", goalType, diff));
+            }
+
+            // Calorie Goal
+            if (document.contains("calorieGoal")) {
+                int calGoal = document.getLong("calorieGoal").intValue();
+                calorieGoalText.setText(calGoal + " kcal");
+            }
+
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "Error loading profile", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void loadFromSharedPreferences() {
+        SharedPreferences prefs = requireContext().getSharedPreferences("CaliTrackPrefs", MODE_PRIVATE);
+
+        int age = prefs.getInt("user_age", 0);
+        if (age > 0) {
+            userAge.setText(age + " years");
+        }
+
+        float height = prefs.getFloat("user_height", 0);
+        if (height > 0) {
+            userHeight.setText((int) height + " cm");
+        }
+
+        float current = prefs.getFloat("user_current_weight", 0);
+        if (current > 0) {
+            currentWeight.setText(String.format("%.1f", current));
+        }
+
+        float goal = prefs.getFloat("user_goal_weight", 0);
+        if (goal > 0) {
+            goalWeight.setText(String.format("%.1f", goal));
+
+            float diff = Math.abs(current - goal);
+            String goalType = current > goal ? "Lose" : "Gain";
+            weightGoalText.setText(String.format("%s %.1f kg", goalType, diff));
+        }
+
+        int calGoal = prefs.getInt("calorie_goal", 2000);
+        calorieGoalText.setText(calGoal + " kcal");
+    }
+
+    private void loadDaysActive() {
+        if (currentUser == null) return;
+
+        db.collection("users")
+                .document(currentUser.getUid())
+                .collection("dailyLogs")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    int days = queryDocumentSnapshots.size();
+                    daysActive.setText(String.valueOf(days));
+                });
     }
 
     private void setupClickListeners() {
         // Notifications switch
         notificationsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // TODO: Save notification preference
+            SharedPreferences prefs = requireContext().getSharedPreferences("CaliTrackPrefs", MODE_PRIVATE);
+            prefs.edit().putBoolean("notifications_enabled", isChecked).apply();
+
             String message = isChecked ? "Notifications enabled" : "Notifications disabled";
             Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         });
 
+        // Load notification preference
+        SharedPreferences prefs = requireContext().getSharedPreferences("CaliTrackPrefs", MODE_PRIVATE);
+        notificationsSwitch.setChecked(prefs.getBoolean("notifications_enabled", true));
+
         // Language & Region
         languageOption.setOnClickListener(v -> {
             Toast.makeText(getContext(), "Language settings coming soon", Toast.LENGTH_SHORT).show();
-            // TODO: Open language settings dialog or activity
         });
 
-        // Goals & Targets
+        // Goals & Targets - Edit goals dialog
         goalsOption.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Goals settings coming soon", Toast.LENGTH_SHORT).show();
-            // TODO: Open goals settings dialog or activity
+            showEditGoalsDialog();
         });
 
         // Privacy & Security
         privacyOption.setOnClickListener(v -> {
             Toast.makeText(getContext(), "Privacy settings coming soon", Toast.LENGTH_SHORT).show();
-            // TODO: Open privacy settings dialog or activity
         });
 
         // Help & Support
         helpOption.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Help & Support coming soon", Toast.LENGTH_SHORT).show();
-            // TODO: Open help center or support chat
+            showHelpDialog();
         });
 
         // Logout button
         logoutButton.setOnClickListener(v -> {
-            handleLogout();
+            showLogoutConfirmation();
         });
     }
 
+    private void showEditGoalsDialog() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_goals, null);
+
+        TextInputEditText goalWeightInput = dialogView.findViewById(R.id.goalWeightInput);
+        TextInputEditText calorieGoalInput = dialogView.findViewById(R.id.calorieGoalInput);
+
+        // Pre-fill current values
+        SharedPreferences prefs = requireContext().getSharedPreferences("CaliTrackPrefs", MODE_PRIVATE);
+        float currentGoalWeight = prefs.getFloat("user_goal_weight", 0);
+        int currentCalorieGoal = prefs.getInt("calorie_goal", 2000);
+
+        if (currentGoalWeight > 0) {
+            goalWeightInput.setText(String.format("%.1f", currentGoalWeight));
+        }
+        calorieGoalInput.setText(String.valueOf(currentCalorieGoal));
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Edit Goals")
+                .setView(dialogView)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    try {
+                        float newGoalWeight = Float.parseFloat(goalWeightInput.getText().toString());
+                        int newCalorieGoal = Integer.parseInt(calorieGoalInput.getText().toString());
+
+                        // Save to SharedPreferences
+                        prefs.edit()
+                                .putFloat("user_goal_weight", newGoalWeight)
+                                .putInt("calorie_goal", newCalorieGoal)
+                                .apply();
+
+                        // Update Firestore
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("goalWeight", newGoalWeight);
+                        updates.put("calorieGoal", newCalorieGoal);
+
+                        db.collection("users")
+                                .document(currentUser.getUid())
+                                .update(updates)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(getContext(), "Goals updated!", Toast.LENGTH_SHORT).show();
+                                    loadUserProfile();
+                                });
+
+                    } catch (Exception e) {
+                        Toast.makeText(getContext(), "Invalid input", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showHelpDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Help & Support")
+                .setMessage("Need help?\n\n" +
+                        "• Email: support@calitrack.app\n" +
+                        "• Website: www.calitrack.app\n" +
+                        "• FAQ: Check our website for common questions\n\n" +
+                        "App Version: 1.0.0")
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    private void showLogoutConfirmation() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Logout", (dialog, which) -> {
+                    handleLogout();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
     private void handleLogout() {
-        // TODO: Implement Firebase logout
-        // TODO: Clear local data
-        // TODO: Navigate to login screen
+        // Sign out from Firebase
+        mAuth.signOut();
 
-        Toast.makeText(getContext(), "Logging out...", Toast.LENGTH_SHORT).show();
+        // Clear login state
+        SharedPreferences prefs = requireContext().getSharedPreferences("CaliTrackPrefs", MODE_PRIVATE);
+        prefs.edit().putBoolean("is_logged_in", false).apply();
 
-        // For now, just show a message
-        // Later, you'll add:
-        // FirebaseAuth.getInstance().signOut();
-        // Intent intent = new Intent(getActivity(), LoginActivity.class);
-        // startActivity(intent);
-        // getActivity().finish();
+        // Navigate to login
+        Intent intent = new Intent(getActivity(), LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        requireActivity().finish();
     }
 }
