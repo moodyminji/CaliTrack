@@ -5,27 +5,42 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.moodyminji.calitrack.models.DailyLog;
 import com.google.android.material.button.MaterialButton;
-import com.moodyminji.calitrack.MainActivity;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.moodyminji.calitrack.R;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class HistoryFragment extends Fragment {
 
     private RecyclerView historyRecyclerView;
     private LinearLayout emptyStateLayout;
     private MaterialButton startTrackingButton;
+    private ProgressBar loadingProgress;
     private TextView daysTrackedText;
+
     private HistoryAdapter historyAdapter;
     private List<HistoryItem> historyItems;
+
+    private FirebaseFirestore db;
+    private FirebaseUser currentUser;
 
     @Nullable
     @Override
@@ -45,79 +60,130 @@ public class HistoryFragment extends Fragment {
         startTrackingButton = view.findViewById(R.id.startTrackingButton);
         daysTrackedText = view.findViewById(R.id.daysTrackedText);
 
+        // Initialize Firebase
+        db = FirebaseFirestore.getInstance();
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
         // Set up RecyclerView
         historyRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        // Load history data
-        loadHistoryData();
-
-        // Set up adapter
+        historyItems = new ArrayList<>();
         historyAdapter = new HistoryAdapter(historyItems);
         historyRecyclerView.setAdapter(historyAdapter);
 
-        // Update days tracked text
-        daysTrackedText.setText(historyItems.size() + " days tracked");
-
-        // Handle empty state
-        if (historyItems.isEmpty()) {
-            showEmptyState();
-        } else {
-            showHistoryList();
-        }
-
-        // Start tracking button click
+        // Start tracking button
         startTrackingButton.setOnClickListener(v -> {
-            // Navigate to Track tab
             if (getActivity() instanceof MainActivity) {
                 ((MainActivity) getActivity()).navigateToTrack();
             }
         });
+
+        // Load history from Firestore
+        if (currentUser != null) {
+            loadHistoryFromFirestore();
+        } else {
+            showEmptyState();
+        }
     }
 
-    private void loadHistoryData() {
-        // TODO: Load from database or API
-        // For now, create sample data matching the design
-        historyItems = new ArrayList<>();
+    private void loadHistoryFromFirestore() {
+        showLoading();
 
-        historyItems.add(new HistoryItem(
-                "Thursday, Nov 13",
-                1234,
-                889,
-                345,
-                "Under goal"
-        ));
+        // Get last 30 days of logs
+        db.collection("users")
+                .document(currentUser.getUid())
+                .collection("dailyLogs")
+                .orderBy("date", Query.Direction.DESCENDING)
+                .limit(30)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    historyItems.clear();
 
-        historyItems.add(new HistoryItem(
-                "Wednesday, Nov 12",
-                1456,
-                1176,
-                280,
-                "Under goal"
-        ));
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        try {
+                            String date = document.getString("date");
+                            int totalCalories = document.getLong("totalCalories").intValue();
+                            int netCalories = document.getLong("netCalories").intValue();
+                            int totalBurned = document.getLong("totalBurned").intValue();
+                            int calorieGoal = document.getLong("calorieGoal").intValue();
 
-        historyItems.add(new HistoryItem(
-                "Tuesday, Nov 11",
-                1598,
-                1186,
-                412,
-                "Under goal"
-        ));
+                            // Calculate progress
+                            int progress = calorieGoal > 0 ?
+                                    Math.min(100, (int) ((netCalories / (float) calorieGoal) * 100)) : 0;
 
-        historyItems.add(new HistoryItem(
-                "Monday, Nov 10",
-                1345,
-                1047,
-                298,
-                "Under goal"
-        ));
+                            // Determine status
+                            String status;
+                            if (netCalories < calorieGoal * 0.9) {
+                                status = "Under goal";
+                            } else if (netCalories > calorieGoal * 1.1) {
+                                status = "Over goal";
+                            } else {
+                                status = "On track";
+                            }
 
-        historyItems.add(new HistoryItem(
-                "Sunday, Nov 9",
-                1423,
-                1058,
-                365,
-                "Under goal"
-        ));
+                            // Format date label
+                            String dateLabel = formatDateLabel(date);
+
+                            historyItems.add(new HistoryItem(
+                                    dateLabel,
+                                    date,
+                                    totalCalories,
+                                    netCalories,
+                                    totalBurned,
+                                    status
+                            ));
+                        } catch (Exception e) {
+                            // Skip invalid entries
+                        }
+                    }
+
+                    if (historyItems.isEmpty()) {
+                        showEmptyState();
+                    } else {
+                        showHistoryList();
+                        daysTrackedText.setText(historyItems.size() + " days tracked");
+                        historyAdapter.notifyDataSetChanged();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(),
+                            "Error loading history: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                    showEmptyState();
+                });
+    }
+
+    private String formatDateLabel(String date) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            Calendar dateCalendar = Calendar.getInstance();
+            dateCalendar.setTime(sdf.parse(date));
+
+            Calendar today = Calendar.getInstance();
+            Calendar yesterday = Calendar.getInstance();
+            yesterday.add(Calendar.DAY_OF_YEAR, -1);
+
+            if (isSameDay(dateCalendar, today)) {
+                return "Today";
+            } else if (isSameDay(dateCalendar, yesterday)) {
+                return "Yesterday";
+            } else {
+                // Format as "Monday, Jan 15"
+                SimpleDateFormat labelFormat = new SimpleDateFormat("EEEE, MMM d", Locale.US);
+                return labelFormat.format(dateCalendar.getTime());
+            }
+        } catch (Exception e) {
+            return date;
+        }
+    }
+
+    private boolean isSameDay(Calendar cal1, Calendar cal2) {
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
+    }
+
+    private void showLoading() {
+        emptyStateLayout.setVisibility(View.GONE);
+        historyRecyclerView.setVisibility(View.GONE);
     }
 
     private void showEmptyState() {
@@ -128,5 +194,14 @@ public class HistoryFragment extends Fragment {
     private void showHistoryList() {
         emptyStateLayout.setVisibility(View.GONE);
         historyRecyclerView.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh history when user comes back to this tab
+        if (currentUser != null) {
+            loadHistoryFromFirestore();
+        }
     }
 }

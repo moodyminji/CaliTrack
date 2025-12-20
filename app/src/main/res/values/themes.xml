@@ -7,6 +7,8 @@
         <item name="colorOnPrimary">@android:color/white</item>
         <item name="colorPrimaryContainer">@color/emerald_50</item>
 
+        
+
         <!-- Secondary colors -->
         <item name="colorSecondary">@color/orange_600</item>
         <item name="colorOnSecondary">@android:color/white</item>
@@ -81,4 +83,20 @@
         <!-- The theme to transition to after the splash screen -->
         <item name="postSplashScreenTheme">@style/Theme.CaliTrack</item>
     </style>
-</resources>
+
+    <!-- ======== START OF FIX ======== -->
+
+    <!-- 1. Define a new theme specifically for activities without a default ActionBar -->
+    <style name="Theme.CaliTrack.NoActionBar" parent="Theme.CaliTrack">
+        <!-- This line removes the default ActionBar -->
+        <item name="windowActionBar">false</item>
+        <!-- This line removes the title bar -->
+        <item name="windowNoTitle">true</item>
+    </style>
+
+
+
+
+
+
+        </resources>

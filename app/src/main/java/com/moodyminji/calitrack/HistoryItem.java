@@ -2,24 +2,31 @@ package com.moodyminji.calitrack;
 
 public class HistoryItem {
     private String dateLabel;
+    private String date;
     private int totalCalories;
     private int netCalories;
     private int burnedCalories;
     private String status;
 
     // Constructor
-    public HistoryItem(String dateLabel, int totalCalories,
+    public HistoryItem(String dateLabel, String date, int totalCalories,
                        int netCalories, int burnedCalories, String status) {
         this.dateLabel = dateLabel;
+        this.date = this.date;
         this.totalCalories = totalCalories;
         this.netCalories = netCalories;
         this.burnedCalories = burnedCalories;
         this.status = status;
+
     }
 
     // Getters
     public String getDateLabel() {
         return dateLabel;
+    }
+
+    public String getDate(){
+        return date;
     }
 
     public int getTotalCalories() {
@@ -42,6 +49,10 @@ public class HistoryItem {
     public void setDateLabel(String dateLabel) {
         this.dateLabel = dateLabel;
     }
+    public void setDate(String date) {
+        this.date = date;
+    }
+
 
     public void setTotalCalories(int totalCalories) {
         this.totalCalories = totalCalories;
