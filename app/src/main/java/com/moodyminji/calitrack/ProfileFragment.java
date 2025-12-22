@@ -3,6 +3,7 @@ package com.moodyminji.calitrack;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -124,6 +125,7 @@ public class ProfileFragment extends Fragment {
                 .addOnSuccessListener(document -> {
                     if (document.exists()) {
                         updateUIFromFirestore(document);
+                        saveToSharedPreferences(document);
                     } else {
                         loadFromSharedPreferences();
                     }
@@ -176,6 +178,24 @@ public class ProfileFragment extends Fragment {
 
         } catch (Exception e) {
             Toast.makeText(getContext(), "Error loading profile", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void saveToSharedPreferences(DocumentSnapshot document) {
+        try {
+            SharedPreferences.Editor editor = requireContext().getSharedPreferences("CaliTrackPrefs", MODE_PRIVATE).edit();
+            if (document.contains("calorieGoal")) {
+                editor.putInt("calorie_goal", document.getLong("calorieGoal").intValue());
+            }
+            if (document.contains("currentWeight")) {
+                editor.putFloat("user_current_weight", document.getDouble("currentWeight").floatValue());
+            }
+            if (document.contains("goalWeight")) {
+                editor.putFloat("user_goal_weight", document.getDouble("goalWeight").floatValue());
+            }
+            editor.apply();
+        } catch (Exception e) {
+            Log.e("ProfileFragment", "Error saving to SharedPreferences", e);
         }
     }
 
@@ -317,38 +337,29 @@ public class ProfileFragment extends Fragment {
     private void showHelpDialog() {
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Help & Support")
-                .setMessage("Need help?\n\n" +
-                        "• Email: support@calitrack.app\n" +
-                        "• Website: www.calitrack.app\n" +
-                        "• FAQ: Check our website for common questions\n\n" +
-                        "App Version: 1.0.0")
-                .setPositiveButton("OK", null)
+                .setMessage("For questions or support, please contact us at 22f22893@mec.edu.om")
+                .setPositiveButton("Sure!", null)
                 .show();
     }
 
     private void showLogoutConfirmation() {
         new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Logout")
-                .setMessage("Are you sure you want to logout?")
+                .setTitle("Confirm Logout")
+                .setMessage("Are you sure you want to log out?")
                 .setPositiveButton("Logout", (dialog, which) -> {
-                    handleLogout();
+                    // Clear login state
+                    SharedPreferences prefs = requireContext().getSharedPreferences("CaliTrackPrefs", MODE_PRIVATE);
+                    prefs.edit().putBoolean("is_logged_in", false).apply();
+
+                    // Sign out from Firebase
+                    mAuth.signOut();
+
+                    // Go to Login Activity
+                    Intent intent = new Intent(getActivity(), LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
-    }
-
-    private void handleLogout() {
-        // Sign out from Firebase
-        mAuth.signOut();
-
-        // Clear login state
-        SharedPreferences prefs = requireContext().getSharedPreferences("CaliTrackPrefs", MODE_PRIVATE);
-        prefs.edit().putBoolean("is_logged_in", false).apply();
-
-        // Navigate to login
-        Intent intent = new Intent(getActivity(), LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        requireActivity().finish();
     }
 }

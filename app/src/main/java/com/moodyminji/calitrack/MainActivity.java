@@ -21,6 +21,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView headerSubtitle;
     private BottomNavigationView bottomNavigation;
     private FirebaseUser currentUser;
+    private TextView profileIconText;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +35,10 @@ public class MainActivity extends AppCompatActivity {
         headerTitle = findViewById(R.id.headerTitle);
         headerSubtitle = findViewById(R.id.headerSubtitle);
         bottomNavigation = findViewById(R.id.bottomNavigation);
+        profileIconText = findViewById(R.id.profileIconText);
+
+
+
 
         // Set up bottom navigation listener
         bottomNavigation.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
@@ -42,7 +48,8 @@ public class MainActivity extends AppCompatActivity {
 
                 if (itemId == R.id.nav_track) {
                     loadFragment(new TrackFragment());
-                    updateHeaderForTrack();;
+                    updateHeaderForTrack();
+                    updateProfileIcon();
                     return true;
                 } else if (itemId == R.id.nav_history) {
                     loadFragment(new HistoryFragment());
@@ -93,4 +100,20 @@ public class MainActivity extends AppCompatActivity {
     public void navigateToTrack() {
         bottomNavigation.setSelectedItemId(R.id.nav_track);
     }
+    private void updateProfileIcon() {
+        if (currentUser != null) {
+            String displayName = currentUser.getDisplayName();
+            if (displayName != null && !displayName.isEmpty()) {
+                profileIconText.setText(String.valueOf(displayName.charAt(0)).toUpperCase());
+            } else {
+                String email = currentUser.getEmail();
+                if (email != null && !email.isEmpty()) {
+                    profileIconText.setText(String.valueOf(email.charAt(0)).toUpperCase());
+                } else {
+                    profileIconText.setText("U"); // Default to 'U' for User
+                }
+            }
+        }
+    }
 }
+

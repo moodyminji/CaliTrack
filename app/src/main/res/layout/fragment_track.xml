@@ -180,9 +180,10 @@
                             android:textColor="@color/gray_600"/>
 
                         <TextView
+                            android:id="@+id/netCaloriesText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Net: 555 / 1500"
+                            android:text="Net: 0 / 1500"
                             android:textSize="12sp"
                             android:textColor="@color/gray_500"/>
                     </LinearLayout>
