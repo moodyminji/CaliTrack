@@ -59,6 +59,7 @@ public class TrackFragment extends Fragment {
     private float totalFats = 0;
     private int calorieGoal = 2000;
     private float userWeight = 70; // Default weight in kg
+    private TextView netCaloriesText;
 
     private Gson gson = new Gson();
 
@@ -85,6 +86,7 @@ public class TrackFragment extends Fragment {
         consumedProgress = view.findViewById(R.id.consumedProgress);
         burnedProgress = view.findViewById(R.id.burnedProgress);
         greetingText = view.findViewById(R.id.greetingText);
+        netCaloriesText = view.findViewById(R.id.netCaloriesText);
 
 
         // Initialize Firebase
@@ -276,9 +278,17 @@ public class TrackFragment extends Fragment {
     }
 
     private void updateUI() {
+        // Calculate net calories
+        int netCalories = totalCaloriesConsumed - totalCaloriesBurned;
+
         // Update calorie values
         caloriesValue.setText(String.valueOf(totalCaloriesConsumed));
         burnedCalories.setText(String.valueOf(totalCaloriesBurned));
+
+        // Update net calories display
+        if (netCaloriesText != null) {
+            netCaloriesText.setText(String.format("Net: %d / %d", netCalories, calorieGoal));
+        }
 
         // Update macros
         proteinValue.setText(String.format("%.0fg", totalProtein));
@@ -290,8 +300,9 @@ public class TrackFragment extends Fragment {
         int burnedPercent = (int) ((totalCaloriesBurned / (float) calorieGoal) * 100);
 
         // Update progress bars
-        consumedProgress.setProgress(Math.min(consumedPercent, 100));
-        burnedProgress.setProgress(Math.min(burnedPercent, 100));
+        consumedProgress.setProgress(Math.min(Math.max(consumedPercent, 0), 100));
+        burnedProgress.setProgress(Math.min(Math.max(burnedPercent, 0), 100));
+        showCalorieSummary();
     }
 
     private void saveMealToFirestore(JsonObject mealData) {
@@ -372,5 +383,20 @@ public class TrackFragment extends Fragment {
                         Toast.makeText(getContext(), "ERROR: " + error, Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+    private void showCalorieSummary() {
+        int netCalories = totalCaloriesConsumed - totalCaloriesBurned;
+        int remaining = calorieGoal - netCalories;
+
+        String message;
+        if (remaining > 0) {
+            message = String.format("You have %d calories remaining!", remaining);
+        } else if (remaining < 0) {
+            message = String.format("You're %d calories over goal.", Math.abs(remaining));
+        } else {
+            message = "Perfect! You've hit your goal! 🎯";
+        }
+
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 }
